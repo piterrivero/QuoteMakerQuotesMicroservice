@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.quotemaker.quotes.ErrorCodes;
 import com.quotemaker.quotes.dao.QuotesRepository;
 import com.quotemaker.quotes.dao.SequenceDao;
+import com.quotemaker.quotes.model.QuoteDetail;
 import com.quotemaker.quotes.model.Quotes;
 import com.quotemaker.quotes.model.response.QuotesGeneralResponse;
 
@@ -24,6 +25,7 @@ import com.quotemaker.quotes.model.response.QuotesGeneralResponse;
 public class QuotesController extends ErrorCodes {
 
 	private static final String QUOTES_SEQ_KEY = "quote";
+	private static final double IVA = 14;
 	
 	@Autowired
 	Environment environment;
@@ -80,7 +82,18 @@ public class QuotesController extends ErrorCodes {
 	
 	@RequestMapping(value = "/quotes/add", method = RequestMethod.POST)
 	public QuotesGeneralResponse add(@RequestBody(required=true) Quotes quote){
-		quote.setIdGroup(sequenceDao.getNextSequenceId(QUOTES_SEQ_KEY));
+		quote.setIdQuote(sequenceDao.getNextSequenceId(QUOTES_SEQ_KEY));
+		
+		double totalPrice = 0;
+		for (QuoteDetail detail : quote.getQuotes()) {
+			detail.setTotalPrice(detail.getUnitPrice() * detail.getQuantity());
+			totalPrice = totalPrice + detail.getTotalPrice();
+		}
+		
+		quote.setTotalPriceWithoutIVA(totalPrice);
+		quote.setIva((totalPrice * IVA) / 100);
+		quote.setTotal(quote.getTotalPriceWithoutIVA() - quote.getIva());
+		
 		quotesRepository.save(quote);
 		
 		QuotesGeneralResponse quoteGeneralResponse = new QuotesGeneralResponse();
@@ -91,22 +104,33 @@ public class QuotesController extends ErrorCodes {
 		return quoteGeneralResponse;
 	}
 	
-	@RequestMapping(value = "/quotes/edit", method = RequestMethod.PATCH)
+	@RequestMapping(value = "/quotes/edit", method = RequestMethod.POST)
 	public QuotesGeneralResponse edit(@RequestBody(required=true) Quotes quote){
 		
 		QuotesGeneralResponse quoteGeneralResponse = new QuotesGeneralResponse();
 		
-		if (quote.getIdGroup() == 0) {
+		if (quote.getIdQuote() == 0) {
 			quoteGeneralResponse.setErrorCode(REQUIRED_FIELD);
 			quoteGeneralResponse.setErrorMsg("Error: the field quoteId is required");
 			quoteGeneralResponse.setResponsePort(environment.getProperty("local.server.port"));
 		}else {
-			QuotesGeneralResponse ggrTemp = findById(String.valueOf(quote.getIdGroup()));
+			QuotesGeneralResponse ggrTemp = findById(String.valueOf(quote.getIdQuote()));
 			if (ggrTemp.getErrorCode() == RECORD_NOT_FOUND){
 				quoteGeneralResponse.setErrorCode(RECORD_NOT_FOUND);
 				quoteGeneralResponse.setErrorMsg("Error: Quote not found");
 				quoteGeneralResponse.setResponsePort(environment.getProperty("local.server.port"));
 			}else {
+				
+				double totalPrice = 0;
+				for (QuoteDetail detail : quote.getQuotes()) {
+					detail.setTotalPrice(detail.getUnitPrice() * detail.getQuantity());
+					totalPrice = totalPrice + detail.getTotalPrice();
+				}
+				
+				quote.setTotalPriceWithoutIVA(totalPrice);
+				quote.setIva((totalPrice * IVA) / 100);
+				quote.setTotal(quote.getTotalPriceWithoutIVA() - quote.getIva());
+				
 				quoteGeneralResponse.setErrorCode(0);
 				quoteGeneralResponse.setErrorMsg("OK");
 				quoteGeneralResponse.setResponsePort(environment.getProperty("local.server.port"));

@@ -3,14 +3,13 @@ package com.quotemaker.quotes.model;
 import java.util.List;
 
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-@Document(collection = "group")
+@Document(collection = "quotes")
 public class Quotes {
 
 	@Id
-	private long idGroup;
+	private long idQuote;
 	
 	private String customerName;
 	
@@ -29,12 +28,12 @@ public class Quotes {
 	public Quotes() {
 	}
 	
-	public long getIdGroup() {
-		return idGroup;
+	public long getIdQuote() {
+		return idQuote;
 	}
-	
-	public void setIdGroup(long idGroup) {
-		this.idGroup = idGroup;
+
+	public void setIdQuote(long idQuote) {
+		this.idQuote = idQuote;
 	}
 
 	public String getCustomerName() {
