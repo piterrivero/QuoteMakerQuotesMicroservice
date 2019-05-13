@@ -97,6 +97,7 @@ public class QuotesController extends ErrorCodes {
 		quotesRepository.save(quote);
 		
 		QuotesGeneralResponse quoteGeneralResponse = new QuotesGeneralResponse();
+		quoteGeneralResponse.setQuote(quote);
 		quoteGeneralResponse.setErrorCode(0);
 		quoteGeneralResponse.setErrorMsg("OK");
 		quoteGeneralResponse.setResponsePort(environment.getProperty("local.server.port"));
